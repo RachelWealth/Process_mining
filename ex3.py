@@ -15,10 +15,15 @@ CAUSAL=set() # The set of all causal relationgship elements
 CHOICE=set()
 X_L = set({})
 EVENTS=set()
+EVENTS_PER=set()
 
 def define_all_event_permutation():
     for i in range(len(EVENTS)):
-        if
+        if i == len(case.keys()) - 1:
+            continue
+        else:
+            
+        
 def casual_per_case(case):
     rt=set()
     # for case in log.keys():
@@ -28,10 +33,10 @@ def casual_per_case(case):
         ei = case[i]
         for j in range(1, len(case.keys())):
             ej = case[j]
-            if [ej, ei] not in CAUSAL:
-                global CAUSAL.add([ei, ej])
+            if (ej, ei) not in CAUSAL:
+                global CAUSAL.add((ei, ej))
             else:
-                global CAUSAL.remove([ej, ei])
+                global CAUSAL.remove((ej, ei))
 def choice_per_case(case):
     for i in range(len(case)):
         if i == len(case.keys()) - 1:
