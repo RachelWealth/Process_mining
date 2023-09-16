@@ -14,6 +14,7 @@ T_O = set({})   # The set of end activities
 CAUSAL=set() # The set of all causal relationgship elements
 CHOICE=set()
 X_L = set((set(),set()))
+Y_L = set((set(),set())) # non-maximal pairs are removed
 EVENTS=set()
 EVENTS_PRE=set()
 
@@ -76,7 +77,14 @@ def X_L():
                 if ADD:
                     X_L.add((x[0],x[1].add(ei)))
               
-                    
+def Y_L():
+    global X_L
+    maxSet =set(list(X_L)[0])
+    for x in X_L:
+        for mx in maxSET:
+            if x[0].issubset(mx[0]) and x[1].issubset(mx[1]) and x!=mx:
+                X_L.remove(x)
+                                
       
     
     
