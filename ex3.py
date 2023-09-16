@@ -15,6 +15,8 @@ CAUSAL=set() # The set of all causal relationgship elements
 CHOICE=set()
 X_L = set((set(),set()))
 Y_L = set((set(),set())) # non-maximal pairs are removed
+F_L=set()
+P_L=set()
 EVENTS=set()
 EVENTS_PRE=set()
 
@@ -84,8 +86,19 @@ def Y_L():
         for mx in maxSET:
             if x[0].issubset(mx[0]) and x[1].issubset(mx[1]) and x!=mx:
                 X_L.remove(x)
-                                
-      
+ 
+def P_L():
+                               
+def F_L():
+    global F_L
+    for x in Y_L:
+        for ax in x[0]:
+            #if ax in T_I:
+           #     F_L.add(['io',x])
+           # else:
+           F_L.add((ax,x))     
+        for bx in x[1]:
+            F_L.add((x,bx))
     
     
 def alpha(log):
