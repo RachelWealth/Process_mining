@@ -88,7 +88,10 @@ def Y_L():
                 X_L.remove(x)
  
 def P_L():
-                               
+    global P_L
+    P_L.add('i_L')
+    P_L.add('o_L')
+    
 def F_L():
     global F_L
     for x in Y_L:
@@ -107,8 +110,13 @@ def alpha(log):
         T_I.add(case[0]["concept:name"])
         T_O.add(case[len(list(case.keys()))-1]["concept:name"])
         casual_per_case(log)
-
-    pass
+        choice_per_case(log)
+    X_L()
+    Y_L()
+    P_L()
+    F_L()
+    global P_L,T_L,F_L
+    return (P_L,T_L,F_L)
 
 
 def read_from_file(filename):
