@@ -20,7 +20,8 @@ P_L=set()
 EVENTS=set()
 EVENTS_PRE=set()
 idi = 0
-ts = {"record issue":1, "inspection":2, "intervention authorization":3, "action not required":4, "work mandate":5, "no concession":6, "work completion":7, "issue completion":8}
+ts = {}
+ps = {}
 
 def define_all_event_permutation(log):
     for i in range(len(EVENTS)):
@@ -98,13 +99,9 @@ def F_L():
     global F_L
     for x in Y_L:
         for ax in x[0]:
-            #if ax in T_I:
-           #     F_L.add(['io',x])
-           # else:
            F_L.add((ax,x))     
         for bx in x[1]:
             F_L.add((x,bx))
-    
     
 def alpha(log):
     # log: {"case":{"event1"{},"event2"{}}}
@@ -117,9 +114,33 @@ def alpha(log):
     Y_L()
     P_L()
     F_L()
+    pn=PetriNet()
+    global ts
+    # add transition
+    for t in EVENTS:
+        pn.add_transition(t, ts[t])
+    # add place
+    for y in Y_L:
+        y_l = list(Y_L)
+        for i in range(len(y_l)):
+            ps[y_l[i]] = i+1
+            pn.add_place(i+1)
+    # add edge
+    for p in P_L:
+        
+            
+        
+        
     global P_L,T_L,F_L
+    pn=PetriNet()
+    
     return (P_L,T_L,F_L)
 
+def tran_dic():
+    global ts
+    events=list(EVENTS)
+    for i in range(len(events)):
+        ts[events[i]]=0-i-1
 
 def read_from_file(filename):
     tree = ET.parse(filename)
@@ -153,6 +174,7 @@ def read_from_file(filename):
             event_no += 1
         log[key] = case
     define_all_event_permutation(log)
+    tran_dic()
     return log
 
 

@@ -6,8 +6,7 @@
 # @Project : pycharm
 from ex3 import read_from_file
 from ex3 import alpha
-from ex3 import PetriNet
-pn=PetriNet()
+
 mined_model = alpha(read_from_file("extension-log.xes"))
 
 def check_enabled(pn):
