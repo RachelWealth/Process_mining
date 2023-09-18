@@ -34,19 +34,17 @@ def define_all_event_permutation():
              EVENTS_PRE.add((e[j],e[i]))
         
 def casual_per_case(case):
-    rt=set()
     global CAUSAL
     # for case in log.keys():
     for i in range(len(case.keys())):
         if i == len(case.keys()) - 1:
             continue
         ei = case[i]["concept:name"]
-        for j in range(1, len(case.keys())):
-            ej = case[j]["concept:name"]
-            if (ej, ei) not in CAUSAL:
-                CAUSAL.add((ei, ej))
-            else:
-                CAUSAL.remove((ej, ei))
+        ej = case[i+1]["concept:name"]
+        if (ej, ei) not in CAUSAL:
+             CAUSAL.add((ei, ej))
+        else:
+            CAUSAL.remove((ej, ei))
 def choice_per_case(case):
     global CHOICE
     CHOICE = EVENTS_PRE
@@ -57,42 +55,52 @@ def choice_per_case(case):
         CHOICE.discard((case[i+1]["concept:name"],case[i]["concept:name"]))
 
 def define_X_L():
-    A=set()
-    B=set()
-    ADD0=True
-    ADD1=True
-    global CHOICE
-    global CAUSAL
-    global EVENTS
+    
+    global CHOICE,CAUSAL,EVENTS,X_L
     # initial
-    X_L.add(((list(CHOICE)[0]),(list(CHOICE)[1])))
+    for c in CAUSAL:
+        X_L.add((frozenset([c[0]]),frozenset([c[1]])))
     print("first X_L is:", X_L)
     for ei in EVENTS:
+        ADD0=True
+        ADD1=True
         # iterate all the sets n X_L, check whether they 
-        for x in X_L:# (set(),set())
+        for x in X_L: # (frozenset(),frozenset())
             if ei not in x[0]:
                 for ax in x[0]:
                     if (ax,ei) not in CHOICE:
                         ADD0=False
-                    if(ax,ei) not in CAUSAL:
-                        ADD1=False
+                        break
                 for bx in x[1]:
                     if (ei,bx) not in CAUSAL:
                         ADD0=False
+                        break
+            if ei not in x[1]:
+                for ax in x[0]:
+                    if(ax,ei) not in CAUSAL:
+                        ADD1=False
+                        break
+                for bx in x[1]:
                     if (ei,bx) not in CHOICE:
                         ADD1=False
-                if ADD0:
-                    X_L.add((x[0].add(ei),x[1]))
-                if ADD1:
-                    X_L.add((x[0],x[1].add(ei)))
+                        break
+            if ADD0:
+                 xi=x[0]
+                 set(xi).add(ei)
+                 X_L.add((frozenset(xi),x[1]))
+            if ADD1:
+                xi=x[1]
+                set(xi).add(ei)
+                X_L.add((x[0],frozenset(xi)))
               
 def define_Y_L():
-    global X_L
-    maxSet =set(list(X_L)[0])
+    global X_L,Y_L
+    Y_L=X_L
+    maxSet = set(list(X_L)[0])
     for x in X_L:
         for mx in maxSet:
-            if x[0].issubset(mx[0]) and x[1].issubset(mx[1]) and x!=mx:
-                X_L.remove(x)
+            if set(x[0]).issubset(set(mx[0])) and set(x[1]).issubset(set(mx[1])) and x!=mx:
+                Y_L.remove(x)
  
 """def P_L():
     global P_L
