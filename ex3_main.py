@@ -19,4 +19,5 @@ def check_enabled(pn):
 trace = ["record issue", "inspection", "intervention authorization", "work mandate", "work completion", "issue completion"]
 for a in trace:
   check_enabled(mined_model)
-  mined_model.fire_transition(mined_model.transition_name_to_id(a))
+  mined_model.fire_transition(
+      mined_model.transition_name_to_id(a))

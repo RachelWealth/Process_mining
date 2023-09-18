@@ -13,8 +13,8 @@ T_I = set({})   # The set of start activities
 T_O = set({})   # The set of end activities
 CAUSAL=set() # The set of all causal relationgship elements
 CHOICE=set()
-X_L = set((set(),set()))
-Y_L = set((set(),set())) # non-maximal pairs are removed
+X_L = set()
+Y_L = set() # non-maximal pairs are removed
 F_L=set()
 P_L=set()
 EVENTS=set()
@@ -23,16 +23,19 @@ idi = 0
 ts = {}
 ps = {}
 
-def define_all_event_permutation(log):
+def define_all_event_permutation():
+    global EVENTS_PRE, EVENTS
+    e=list(EVENTS)
     for i in range(len(EVENTS)):
-        if i == len(case.keys()) - 1:
-            continue
-        else:
-            EVENTS_PRE.add((case[i]["concept:name"],case[i+1]["concept:name"]))
-            
+        # if i == len(EVENTS):
+          #  break
+        for j in range(i,len(EVENTS)):
+             EVENTS_PRE.add((e[i],e[j]))
+             EVENTS_PRE.add((e[j],e[i]))
         
 def casual_per_case(case):
     rt=set()
+    global CAUSAL
     # for case in log.keys():
     for i in range(len(case.keys())):
         if i == len(case.keys()) - 1:
@@ -41,18 +44,19 @@ def casual_per_case(case):
         for j in range(1, len(case.keys())):
             ej = case[j]["concept:name"]
             if (ej, ei) not in CAUSAL:
-                global CAUSAL.add((ei, ej))
+                CAUSAL.add((ei, ej))
             else:
-                global CAUSAL.remove((ej, ei))
+                CAUSAL.remove((ej, ei))
 def choice_per_case(case):
-    global CHOICE = EVENTS_PRE
+    global CHOICE
+    CHOICE = EVENTS_PRE
     for i in range(len(case)):
         if i == len(case.keys()) - 1:
             continue
-        CHOICE.remove((case[i]["concept:name"],case[j]["concept:name"]))
-        CHOICE.remove((case[j]["concept:name"],case[i]["concept:name"]))
+        CHOICE.discard((case[i]["concept:name"],case[i+1]["concept:name"]))
+        CHOICE.discard((case[i+1]["concept:name"],case[i]["concept:name"]))
 
-def X_L():
+def define_X_L():
     A=set()
     B=set()
     ADD0=True
@@ -79,23 +83,23 @@ def X_L():
                         ADD1=False
                 if ADD0:
                     X_L.add((x[0].add(ei),x[1]))
-                if ADD:
+                if ADD1:
                     X_L.add((x[0],x[1].add(ei)))
               
-def Y_L():
+def define_Y_L():
     global X_L
     maxSet =set(list(X_L)[0])
     for x in X_L:
-        for mx in maxSET:
+        for mx in maxSet:
             if x[0].issubset(mx[0]) and x[1].issubset(mx[1]) and x!=mx:
                 X_L.remove(x)
  
-def P_L():
+"""def P_L():
     global P_L
     P_L.add('i_L')
     P_L.add('o_L')
-    
-def F_L():
+    """
+def define_F_L():
     global F_L
     for x in Y_L:
         for ax in x[0]:
@@ -106,16 +110,15 @@ def F_L():
 def alpha(log):
     # log: {"case":{"event1"{},"event2"{}}}
     for case in log.keys():
-        T_I.add(case[0]["concept:name"])
-        T_O.add(case[len(list(case.keys()))-1]["concept:name"])
-        casual_per_case(log)
-        choice_per_case(log)
-    X_L()
-    Y_L()
-    P_L()
-    F_L()
+        T_I.add(log[case][0]["concept:name"])
+        T_O.add(log[case][len(list(log[case].keys()))-1]["concept:name"])
+        casual_per_case(log[case])
+        choice_per_case(log[case])
+    define_X_L()
+    define_Y_L()
+    define_F_L()
+    global T_L,F_L, ps, ts
     pn=PetriNet()
-    global ts
     # add transition
     for t in EVENTS:
         pn.add_transition(t, ts[t])
@@ -126,15 +129,12 @@ def alpha(log):
             ps[y_l[i]] = i+1
             pn.add_place(i+1)
     # add edge
-    for p in P_L:
-        
-            
-        
-        
-    global P_L,T_L,F_L
-    pn=PetriNet()
-    
-    return (P_L,T_L,F_L)
+    for y in Y_L:
+        for ay in y[0]:
+            pn.add_edge(ay, ps[y])
+        for by in y[1]:
+            pn.add_edge( ps[y], by)
+    return pn
 
 def tran_dic():
     global ts
@@ -146,6 +146,7 @@ def read_from_file(filename):
     tree = ET.parse(filename)
     root = tree.getroot()
     log = {}  # {"case":{event1:{},event2:{}}
+    global EVENTS
     for trace in root.findall(link + 'trace'):
         event_no = 0
         keys = trace.findall(link + 'string')[0]
@@ -173,13 +174,9 @@ def read_from_file(filename):
             case[event_no] = e
             event_no += 1
         log[key] = case
-    define_all_event_permutation(log)
+    define_all_event_permutation()
     tran_dic()
     return log
-
-
-
-
 
 
 class PetriNet():
@@ -248,5 +245,5 @@ class PetriNet():
                 self.pla[1][self.pla[0].index(input)][1] -= 1
                 self.pla[1][self.pla[0].index(next_marking)][1] += 1
                 return
-    ddef transition_name_to_id(s):
+    def transition_name_to_id(s):
         return ts[s]
