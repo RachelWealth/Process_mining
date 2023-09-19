@@ -9,32 +9,34 @@ from datetime import datetime
 
 link = '{http://www.xes-standard.org/}'
 T_L = set({})  # The set of all the activities
-T_I = set({})   # The set of start activities
-T_O = set({})   # The set of end activities
-CAUSAL=set() # The set of all causal relationgship elements
-CHOICE=set()
+T_I = set({})  # The set of start activities
+T_O = set({})  # The set of end activities
+CAUSAL = set()  # The set of all causal relationgship elements
+CHOICE = set()
 X_L = set()
-Y_L = set() # non-maximal pairs are removed
-F_L=set()
-P_L=set()
-EVENTS=set()
-EVENTS_PRE=set()
+Y_L = set()  # non-maximal pairs are removed
+F_L = set()
+P_L = set()
+EVENTS = set()
+EVENTS_PRE = set()
 idi = 0
 ts = {}
 ps = {}
 
+
 def define_all_event_permutation():
     global EVENTS_PRE, EVENTS
-    e=list(EVENTS)
+    e = list(EVENTS)
     for i in range(len(EVENTS)):
         # if i == len(EVENTS):
-          #  break
-        for j in range(i,len(EVENTS)):
-             EVENTS_PRE.add((e[i],e[j]))
-             EVENTS_PRE.add((e[j],e[i]))
-        
+        #  break
+        for j in range(i, len(EVENTS)):
+            EVENTS_PRE.add((e[i], e[j]))
+            EVENTS_PRE.add((e[j], e[i]))
+
+
 def casual_per_case(case):
-    rt=set()
+    rt = set()
     global CAUSAL
     # for case in log.keys():
     for i in range(len(case.keys())):
@@ -47,100 +49,109 @@ def casual_per_case(case):
                 CAUSAL.add((ei, ej))
             else:
                 CAUSAL.remove((ej, ei))
+
+
 def choice_per_case(case):
     global CHOICE
     CHOICE = EVENTS_PRE
     for i in range(len(case)):
         if i == len(case.keys()) - 1:
             continue
-        CHOICE.discard((case[i]["concept:name"],case[i+1]["concept:name"]))
-        CHOICE.discard((case[i+1]["concept:name"],case[i]["concept:name"]))
+        CHOICE.discard((case[i]["concept:name"], case[i + 1]["concept:name"]))
+        CHOICE.discard((case[i + 1]["concept:name"], case[i]["concept:name"]))
+
 
 def define_X_L():
-    A=set()
-    B=set()
-    ADD0=True
-    ADD1=True
+    A = set()
+    B = set()
+    ADD0 = True
+    ADD1 = True
     global CHOICE
     global CAUSAL
     global EVENTS
     # initial
-    X_L.add(((list(CHOICE)[0]),(list(CHOICE)[1])))
+    X_L.add(((list(CHOICE)[0]), (list(CHOICE)[1])))
     print("first X_L is:", X_L)
     for ei in EVENTS:
         # iterate all the sets n X_L, check whether they 
-        for x in X_L:# (set(),set())
+        for x in X_L:  # (set(),set())
             if ei not in x[0]:
                 for ax in x[0]:
-                    if (ax,ei) not in CHOICE:
-                        ADD0=False
-                    if(ax,ei) not in CAUSAL:
-                        ADD1=False
+                    if (ax, ei) not in CHOICE:
+                        ADD0 = False
+                    if (ax, ei) not in CAUSAL:
+                        ADD1 = False
                 for bx in x[1]:
-                    if (ei,bx) not in CAUSAL:
-                        ADD0=False
-                    if (ei,bx) not in CHOICE:
-                        ADD1=False
+                    if (ei, bx) not in CAUSAL:
+                        ADD0 = False
+                    if (ei, bx) not in CHOICE:
+                        ADD1 = False
                 if ADD0:
-                    X_L.add((x[0].add(ei),x[1]))
+                    X_L.add((x[0].add(ei), x[1]))
                 if ADD1:
-                    X_L.add((x[0],x[1].add(ei)))
-              
+                    X_L.add((x[0], x[1].add(ei)))
+
+
 def define_Y_L():
     global X_L
-    maxSet =set(list(X_L)[0])
+    maxSet = set(list(X_L)[0])
     for x in X_L:
         for mx in maxSet:
-            if x[0].issubset(mx[0]) and x[1].issubset(mx[1]) and x!=mx:
+            if x[0].issubset(mx[0]) and x[1].issubset(mx[1]) and x != mx:
                 X_L.remove(x)
- 
+
+
 """def P_L():
     global P_L
     P_L.add('i_L')
     P_L.add('o_L')
     """
+
+
 def define_F_L():
     global F_L
     for x in Y_L:
         for ax in x[0]:
-           F_L.add((ax,x))     
+            F_L.add((ax, x))
         for bx in x[1]:
-            F_L.add((x,bx))
-    
+            F_L.add((x, bx))
+
+
 def alpha(log):
     # log: {"case":{"event1"{},"event2"{}}}
     for case in log.keys():
         T_I.add(log[case][0]["concept:name"])
-        T_O.add(log[case][len(list(log[case].keys()))-1]["concept:name"])
+        T_O.add(log[case][len(list(log[case].keys())) - 1]["concept:name"])
         casual_per_case(log[case])
         choice_per_case(log[case])
     define_X_L()
     define_Y_L()
     define_F_L()
-    global T_L,F_L, ps, ts
-    pn=PetriNet()
+    global T_L, F_L, ps, ts
+    pn = PetriNet()
     # add transition
     for t in EVENTS:
         pn.add_transition(t, ts[t])
     # add place
-    for y in Y_L:
-        y_l = list(Y_L)
-        for i in range(len(y_l)):
-            ps[y_l[i]] = i+1
-            pn.add_place(i+1)
+    y_l = list(Y_L)
+    for i in range(len(y_l)):
+        ps[y_l[i]] = i + 1
+        pn.add_place(i + 1)
     # add edge
     for y in Y_L:
         for ay in y[0]:
             pn.add_edge(ay, ps[y])
         for by in y[1]:
-            pn.add_edge( ps[y], by)
+            pn.add_edge(ps[y], by)
     return pn
+
 
 def tran_dic():
     global ts
-    events=list(EVENTS)
+    events = list(EVENTS)
     for i in range(len(events)):
-        ts[events[i]]=0-i-1
+        ts[events[i]] = 0 - i - 1
+
 
 def read_from_file(filename):
     tree = ET.parse(filename)
@@ -165,11 +176,10 @@ def read_from_file(filename):
                 if key_event == 'int':
                     e[elem.get('key')] = int(elem.get('value'))
                 else:
-                    if elem.get('key')=="concept:name":
+                    if elem.get('key') == "concept:name":
                         T_L.add(elem.get('value'))
                         # TODO collect all the tasks
                         EVENTS.add(elem.get('value'))
-
                     e[elem.get('key')] = elem.get('value')
             case[event_no] = e
             event_no += 1
@@ -179,8 +189,7 @@ def read_from_file(filename):
     return log
 
 
-class PetriNet():
-
+class PetriNet:
     def __init__(self):
         # code here
         self.tran = []
@@ -245,5 +254,6 @@ class PetriNet():
                 self.pla[1][self.pla[0].index(input)][1] -= 1
                 self.pla[1][self.pla[0].index(next_marking)][1] += 1
                 return
+
     def transition_name_to_id(s):
         return ts[s]
