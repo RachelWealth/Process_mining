@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+# @Time : 06/10/2023 13:58
+# @Author :Rachel Duan
+# @Email : rachel_duanyingli@163.com
+# @File : ex4.py
+# @Project : pycharm
+# -*- coding: utf-8 -*-
 # @Time : 13/09/2023 12:39
 # @Author :Rachel Duan
 # @Email : rachel_duanyingli@163.com
@@ -24,6 +30,7 @@ idi = 0
 ts = {}
 ps = {}
 nodes = {}
+nodes_ope=set()
 
 
 def define_all_event_permutation():
@@ -176,7 +183,8 @@ def find_operator(node, value):
             return child
     # or create one
     n = Node(0, 'o', value)
-
+    global nodes_ope
+    nodes_ope.add(n)
     return n
 
 
@@ -190,20 +198,21 @@ def add_node(pa, function_node, nodes, order):
 
 
 def generate_tree(pn):
+    global nodes_ope
     root = Node(0, "o", "->", token=1)
+    nodes_ope.add(root)
     rootchild = Node(pn.transition_name_to_id(EVENTS[0]), 't', pn.transition_name_to_id(EVENTS[0]), parents={root})
     root.children = {rootchild}
     order = [rootchild.id]
     global nodes
     nodes = {-1: rootchild}
-    # iedge = pn.iedge.copy()
     oedge = pn.oedge.copy()
-    order_copy=[]
+    order_copy = []
 
     global PARALLEL
     while order:
         if order[0] in order_copy:
-            order=order[1:]
+            order = order[1:]
             continue
         order_copy.append(order[0])
         outputs = oedge[1][oedge[0].index(order[0])][1:]
@@ -218,11 +227,12 @@ def generate_tree(pn):
                     outputtran.add(oss)
             except:
                 end = Node(1, 'o', '->', {nodes[order[0]]})
+                nodes_ope.add(end)
                 nodes[order[0]].children = {end}
                 if len(order) == 0:
                     flag = "order finished"
-                if len(order)>0:
-                    flag="order not finished"
+                if len(order) > 0:
+                    flag = "order not finished"
 
         if flag == "order finished":
             break
@@ -263,7 +273,7 @@ def generate_tree(pn):
                             for cc in list(nodes[ch].parents)[0].children:
                                 outputlist.discard(cc.value)
         if len(outputlist) > 0:
-            function_node = find_operator(nodes[order[0]], '->')
+            # function_node = find_operator(nodes[order[0]], '->')
             outputlistcopy = outputlist.copy()
             for ch in outputlistcopy:
                 if ch not in nodes.keys():
@@ -327,7 +337,6 @@ def read_from_file(filename):
 
 
 class PetriNet():
-
     def __init__(self):
         # code here
         self.tran = []
@@ -465,3 +474,70 @@ class Node:
         self.function = function  # function = data or operators
         self.id = id
         self.token = token
+
+
+def fitness_token_replay(log, model):
+    global nodes
+    metric3 = {}  # {"trace type":n,m,r,c,p}
+    for case in log.keys():
+        trace = log[case]
+        ins = list(trace.keys())
+        instance = []
+        for i in ins:
+            instance.append(ts[trace[i]['concept:name']])
+        if tuple(instance) not in metric3.keys():
+            metric3[tuple(instance)] = [1, 0, 0, 0, 1]
+        else:
+            metric3[tuple(instance)][0] += 1
+    # print("All type of trace:", metric3)
+
+    # if True:
+    #     if len(metric3.keys())>6:
+    #         return 0.95543
+    #     else:
+    #         return 1.0
+    for instance in metric3.keys():
+
+        # initial oll nodes
+        for node in nodes_ope:
+            node.token = 0
+
+        list(nodes[-1].parents)[0].token = 1
+        # print("instance:", instance)
+
+        for i in range(len(instance)):
+            event = instance[i]
+            # print("event:", event)
+            # if event in currentNodeInds:
+            # c - parent
+            metric3[instance][3] += len(nodes[event].parents)
+            # check if missing any, and reduce the token
+            for p in nodes[event].parents:
+                if p.token < 1:
+                    metric3[instance][1] += 1
+                else:
+                    p.token -= 1
+            # p - children
+            metric3[instance][4] += len(nodes[event].children)
+            # increase the token of children
+            for c in nodes[event].children:
+                c.token += 1
+            # check the last marketing
+        for e in nodes_ope:
+            if e.id == 1:
+                if e.token < 1:
+                    metric3[instance][1] += 1
+                else:
+                    e.token -= 1
+                metric3[instance][3] += 1
+        # metric3[instance][4] += sum(len(c.children) for c in nodes[event].children)
+        metric3[instance][2] += sum(e.token for e in nodes_ope)
+    f_1_1, f_1_2, f_2_1, f_2_2 = 0, 0, 0, 0
+    for instance in metric3.keys():
+        print(instance,metric3[instance][0], metric3[instance][1], metric3[instance][2], metric3[instance][3],metric3[instance][4])
+        f_1_1 += metric3[instance][0] * metric3[instance][1]
+        f_1_2 += metric3[instance][0] * metric3[instance][3]
+        f_2_1 += metric3[instance][0] * metric3[instance][2]
+        f_2_2 += metric3[instance][0] * metric3[instance][4]
+    #print(f_1_1, f_2_1, f_1_2, f_2_2)
+    return 0.5 * (1 - f_1_1 / f_1_2) + 0.5 * (1 - f_2_1 / f_2_2)
