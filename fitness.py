@@ -18,7 +18,6 @@ process_model, initial_marking, final_marking = pm4py.discover_petri_net_alpha(l
 
 replayed_traces = pm4py.conformance_diagnostics_token_based_replay(log_test, process_model, initial_marking, final_marking)
 fitness = pm4py.fitness_token_based_replay(log_test, process_model,initial_marking, final_marking )
-print(replayed_traces[565])
-print(replayed_traces)
+
 print("Fitness:", fitness )
 

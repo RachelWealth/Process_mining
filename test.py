@@ -8,6 +8,7 @@
 import pm4py
 
 if __name__ == "__main__":
-    log = pm4py.read_xes('extension-log-4.xes')
-    process_model = pm4py.discover_bpmn_inductive(log)
-    pm4py.view_bpmn(process_model)
+    log = pm4py.read_xes("extension-log-4.xes")
+    net = pm4py.discover_heuristics_net(log, dependency_threshold=0.1)
+    print(net)
+    pm4py.view_heuristics_net(net)

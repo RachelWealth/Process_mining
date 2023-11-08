@@ -491,11 +491,7 @@ def fitness_token_replay(log, model):
             metric3[tuple(instance)][0] += 1
     # print("All type of trace:", metric3)
 
-    # if True:
-    #     if len(metric3.keys())>6:
-    #         return 0.95543
-    #     else:
-    #         return 1.0
+
     for instance in metric3.keys():
 
         # initial oll nodes
@@ -539,5 +535,5 @@ def fitness_token_replay(log, model):
         f_1_2 += metric3[instance][0] * metric3[instance][3]
         f_2_1 += metric3[instance][0] * metric3[instance][2]
         f_2_2 += metric3[instance][0] * metric3[instance][4]
-    #print(f_1_1, f_2_1, f_1_2, f_2_2)
+    print(f_1_1, f_2_1, f_1_2, f_2_2)
     return 0.5 * (1 - f_1_1 / f_1_2) + 0.5 * (1 - f_2_1 / f_2_2)
